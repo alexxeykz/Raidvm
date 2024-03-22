@@ -1,0 +1,35 @@
+- hosts: vm
+  become: true
+  tasks:
+    - name: Install mdadm
+      apt:
+        name: mdadm
+        state: present
+    
+    - name: Create Parted array
+      command: parted /dev/sdb mklabel msdos
+
+    - name: Create Parted2 array
+      command: parted /dev/sdc mklabel msdos   
+
+    - name: Create Parted3 array
+      command: parted /dev/sdb mkpart primary ext4 250 100%
+
+    - name: Create Parted3 array
+      command: parted /dev/sdc mkpart primary ext4 250 100%
+
+
+    - name: Install RAID
+      command: mdadm --create --metadata=0.90 /dev/md0 --level=1 --force --raid-devices=2 /dev/sdb1 /dev/sdc1
+        #  register: result
+        # ignore_errors: true
+
+    - name: Format RAID1 array
+      command: mkfs.ext4 /dev/md0
+
+    - name: Mount RAID1 array
+      mount:
+        path: /mnt
+        src: /dev/md0
+        fstype: ext4
+        state: mounted
